@@ -31,16 +31,26 @@ func main() {
 		if err != nil {
 			log.Printf("Fetching error: %v", err)
 		}
-		log.Printf("Fetched %d notifications\n", len(nt))
+		log.Printf("Fetched %d unread notifications\n", len(nt))
 		if len(nt) == 0 {
 			break
 		}
 		for _, n := range nt {
 			if strings.Contains(strings.ToLower(n.Subject.GetTitle()), "typo") {
-				log.Printf("Marking notification `%s` as read, url: %s", n.Subject.GetTitle(), n.GetURL())
+				log.Printf(
+					"Handling `%s`, id: %s, repo: %s, url: %s",
+					n.Subject.GetTitle(),
+					n.GetID(),
+					n.GetRepository().GetFullName(),
+					n.GetURL(),
+				)
 				_, err := client.Activity.MarkThreadRead(ctx, n.GetID())
 				if err != nil {
-					log.Printf("Makring error: %v", err)
+					log.Printf("Makring %s failed: %v", n.GetURL(), err)
+				}
+				_, err = client.Activity.DeleteThreadSubscription(ctx, n.GetID())
+				if err != nil {
+					log.Printf("Deleting %s failed: %v", n.GetURL(), err)
 				}
 			}
 		}
